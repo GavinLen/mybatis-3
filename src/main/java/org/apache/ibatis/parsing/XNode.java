@@ -1,17 +1,17 @@
 /**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2019 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.parsing;
 
@@ -27,6 +27,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
+ * 节点
+ *
  * @author Clinton Begin
  */
 public class XNode {
@@ -38,6 +40,13 @@ public class XNode {
   private final Properties variables;
   private final XPathParser xpathParser;
 
+  /**
+   * 已经完成了动态值的替换
+   *
+   * @param xpathParser
+   * @param node
+   * @param variables
+   */
   public XNode(XPathParser xpathParser, Node node, Properties variables) {
     this.xpathParser = xpathParser;
     this.node = node;
@@ -47,12 +56,25 @@ public class XNode {
     this.body = parseBody(node);
   }
 
+  /**
+   * 创建新节点
+   *
+   * @param node
+   * @return
+   */
   public XNode newXNode(Node node) {
     return new XNode(xpathParser, node, variables);
   }
 
+  /**
+   * 获取父节点
+   *
+   * @return
+   */
   public XNode getParent() {
+    // 获取父节点
     Node parent = node.getParentNode();
+    // 验证其是否为元素
     if (!(parent instanceof Element)) {
       return null;
     } else {
@@ -60,19 +82,33 @@ public class XNode {
     }
   }
 
+  /**
+   * 获取路径
+   *
+   * @return
+   */
   public String getPath() {
     StringBuilder builder = new StringBuilder();
     Node current = node;
+    // 是元素则处理
     while (current instanceof Element) {
+      // 在前面加 /
       if (current != node) {
         builder.insert(0, "/");
       }
+      // 在前面插入节点名称
       builder.insert(0, current.getNodeName());
+      // 获取父节点
       current = current.getParentNode();
     }
     return builder.toString();
   }
 
+  /**
+   * 获取值的标识符
+   *
+   * @return
+   */
   public String getValueBasedIdentifier() {
     StringBuilder builder = new StringBuilder();
     XNode current = this;
@@ -81,13 +117,13 @@ public class XNode {
         builder.insert(0, "_");
       }
       String value = current.getStringAttribute("id",
-          current.getStringAttribute("value",
-              current.getStringAttribute("property", null)));
+        current.getStringAttribute("value",
+          current.getStringAttribute("property", null)));
       if (value != null) {
         value = value.replace('.', '_');
         builder.insert(0, "]");
         builder.insert(0,
-            value);
+          value);
         builder.insert(0, "[");
       }
       builder.insert(0, current.getName());
@@ -360,9 +396,22 @@ public class XNode {
     }
   }
 
+  /**
+   * 解析属性
+   *
+   * @param n
+   * @return
+   */
   private Properties parseAttributes(Node n) {
     Properties attributes = new Properties();
+    /**
+     * 1. 获取属性 Map
+     */
     NamedNodeMap attributeNodes = n.getAttributes();
+
+    /**
+     * 2. 参数替换
+     */
     if (attributeNodes != null) {
       for (int i = 0; i < attributeNodes.getLength(); i++) {
         Node attribute = attributeNodes.item(i);
@@ -373,9 +422,16 @@ public class XNode {
     return attributes;
   }
 
+  /**
+   * 解析 Body
+   *
+   * @param node
+   * @return
+   */
   private String parseBody(Node node) {
     String data = getBodyData(node);
     if (data == null) {
+      // 获取子节点
       NodeList children = node.getChildNodes();
       for (int i = 0; i < children.getLength(); i++) {
         Node child = children.item(i);
@@ -388,9 +444,15 @@ public class XNode {
     return data;
   }
 
+  /**
+   * 获取 Body 数据
+   * 完成参数替换
+   *
+   * @param child
+   * @return
+   */
   private String getBodyData(Node child) {
-    if (child.getNodeType() == Node.CDATA_SECTION_NODE
-        || child.getNodeType() == Node.TEXT_NODE) {
+    if (child.getNodeType() == Node.CDATA_SECTION_NODE || child.getNodeType() == Node.TEXT_NODE) {
       String data = ((CharacterData) child).getData();
       data = PropertyParser.parse(data, variables);
       return data;
