@@ -121,7 +121,7 @@ public class PropertyParser {
           return variables.getProperty(key);
         }
       }
-      return "${" + content + "}";
+       return "${" + content + "}";
     }
   }
 
